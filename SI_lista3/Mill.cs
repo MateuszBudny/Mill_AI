@@ -56,8 +56,30 @@ namespace SI_lista3 {
             nodes[21].SetRight(nodes[22]);
             nodes[22].SetRight(nodes[23]);
 
-            nodes[17].State = NodeState.Black;
-            nodes[19].State = NodeState.White;
+            // rows
+            rows = new List<Row> {
+
+                // horizontal rows
+                new Row(nodes[0], nodes[1], nodes[2], true),
+                new Row(nodes[3], nodes[4], nodes[5], true),
+                new Row(nodes[6], nodes[7], nodes[8], true),
+                new Row(nodes[9], nodes[10], nodes[11], true),
+                new Row(nodes[12], nodes[13], nodes[14], true),
+                new Row(nodes[15], nodes[16], nodes[17], true),
+                new Row(nodes[18], nodes[19], nodes[20], true),
+                new Row(nodes[21], nodes[22], nodes[23], true),
+
+                // vertical rows
+                new Row(nodes[0], nodes[9], nodes[21], false),
+                new Row(nodes[3], nodes[10], nodes[18], false),
+                new Row(nodes[6], nodes[11], nodes[15], false),
+                new Row(nodes[1], nodes[4], nodes[7], false),
+                new Row(nodes[16], nodes[19], nodes[22], false),
+                new Row(nodes[8], nodes[12], nodes[17], false),
+                new Row(nodes[5], nodes[13], nodes[20], false),
+                new Row(nodes[2], nodes[14], nodes[23], false)
+            };
+
         }
 
         public void Print() {

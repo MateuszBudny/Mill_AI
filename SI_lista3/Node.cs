@@ -15,6 +15,8 @@ namespace SI_lista3 {
     class Node {
         public int Id { get; set; }
         public NodeState State { get; set; }
+        public Row HorizontalRow { get; set; }
+        public Row VerticalRow { get; set; }
         public Node Left { get; set; } 
         public Node Right { get; set; }
         public Node Up { get; set; }
@@ -66,7 +68,7 @@ namespace SI_lista3 {
                 case NodeState.NotFilled:
                     return ConsoleColor.White;
                 case NodeState.White:
-                    return ConsoleColor.DarkCyan;
+                    return ConsoleColor.Cyan;
                 case NodeState.Black:
                     return ConsoleColor.DarkRed;
                 default:
