@@ -12,7 +12,7 @@ namespace SI_lista3 {
         White
     }
 
-    class Node {
+    public class Node {
         public int Id { get; set; }
         public NodeState State { get; set; }
         public Row HorizontalRow { get; set; }
@@ -57,6 +57,37 @@ namespace SI_lista3 {
         public void SetDown(Node node) {
             Down = node;
             node.Up = this;
+        }
+
+        public void SetColor(bool isWhite) {
+            State = isWhite ? NodeState.White : NodeState.Black;
+        }
+
+        public void SetEmpty() {
+            State = NodeState.NotFilled;
+            CheckIfMillCrashed();
+        }
+
+        public bool IsNodeNeighbour(Node node) {
+            return Left == node || Right == node || Up == node || Down == node;
+        }
+
+        public bool HasAnyEmptyNeighbours() {
+            return Left?.State == NodeState.NotFilled || Right?.State == NodeState.NotFilled ||
+                Up?.State == NodeState.NotFilled || Down?.State == NodeState.NotFilled;
+        }
+
+        public bool IsNewMill() {
+            return HorizontalRow.IsNewMill() || VerticalRow.IsNewMill();
+        }
+
+        public bool IsStayedMill() {
+            return HorizontalRow.IsStayedMill || VerticalRow.IsStayedMill;
+        }
+
+        private void CheckIfMillCrashed() {
+            HorizontalRow.CheckIfMillCrashed();
+            VerticalRow.CheckIfMillCrashed();
         }
 
         public override string ToString() {

@@ -5,10 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SI_lista3 {
-    class Row {
+    public class Row {
         public List<Node> Nodes { get; set; }
+        public bool IsStayedMill { get; set; }
 
         public Row(Node node1, Node node2, Node node3, bool isHorizontal) {
+            IsStayedMill = false;
+
             Nodes = new List<Node> {
                 node1,
                 node2,
@@ -26,7 +29,24 @@ namespace SI_lista3 {
             }
         }
 
-        public bool IsMill() {
+        public bool IsNewMill() {
+            if(IsStayedMill) {
+                return false;
+            }
+
+            IsStayedMill = IsWholeRowInOneColor();
+            return IsStayedMill;
+        }
+
+        public void CheckIfMillCrashed() {
+            if(!IsStayedMill) {
+                return;
+            }
+
+            IsStayedMill = IsWholeRowInOneColor();
+        }
+
+        private bool IsWholeRowInOneColor() {
             return Nodes.All(n => n.State == NodeState.White) || Nodes.All(n => n.State == NodeState.Black);
         }
     }
