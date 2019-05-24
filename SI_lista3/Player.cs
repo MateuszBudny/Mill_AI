@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SI_lista3 {
+namespace Mill_AI {
     public enum GameState {
         FirstStage, // player has pawns in hand and puts them where he wants
         SecondStage, // player has no pawns in hand and moves them on board to adjacent nodes

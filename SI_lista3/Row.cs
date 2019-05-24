@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SI_lista3 {
+namespace Mill_AI {
     public class Row {
         public List<Node> Nodes { get; set; }
         public bool IsStayedMill { get; set; }

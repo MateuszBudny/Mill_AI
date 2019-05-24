@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static SI_lista3.Tools;
+using static Mill_AI.Tools;
 
-namespace SI_lista3 {
+namespace Mill_AI {
     public enum NodeState {
         NotFilled,
         Black,
