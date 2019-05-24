@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.271
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mill_AI", "SI_lista3\Mill_AI.csproj", "{997FC03B-A776-4DA9-96F0-0E000AC984D3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mill_AI", "Mill_AI\Mill_AI.csproj", "{997FC03B-A776-4DA9-96F0-0E000AC984D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
