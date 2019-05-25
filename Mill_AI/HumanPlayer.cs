@@ -18,8 +18,7 @@ namespace Mill_AI {
             switch (State) {
                 case GameState.FirstStage:
 
-                    OnePositionMove("STAGE 1\nWhere should your pawn land? (left pawns: " + PawnsInHandNum + ")> ", false, 
-                        IsMoveValidToEmptyNode, 
+                    OnFirstStageMove("STAGE 1\nWhere should your pawn land? (left pawns: " + PawnsInHandNum + ")> ",
                         (pos) => {
                             Nodes[pos].SetColor(IsWhite);
 
@@ -38,10 +37,7 @@ namespace Mill_AI {
 
                 case GameState.SecondStage:
 
-                    TwoPositionsMove(2,
-                        (firstPos) => IsMoveValidNodeIsYourColor(firstPos) && HasNodeAnyEmptyNeighbours(firstPos),
-                        (firstPos, secondPos) => IsMoveValidStartAndEndPosSecondStage(firstPos, secondPos),
-                        (firstPos, secondPos) => {
+                    OnSecondStageMove((firstPos, secondPos) => {
                             Nodes[firstPos].SetEmpty();
                             Nodes[secondPos].SetColor(IsWhite);
 
@@ -55,10 +51,7 @@ namespace Mill_AI {
 
                 case GameState.ThirdStage:
 
-                    TwoPositionsMove(3,
-                        (firstPos) => IsMoveValidNodeIsYourColor(firstPos),
-                        (_, secondPos) => IsMoveValidToEmptyNode(secondPos),
-                        (firstPos, secondPos) => {
+                    OnThirdStageMove((firstPos, secondPos) => {
                             Nodes[firstPos].SetEmpty();
                             Nodes[secondPos].SetColor(IsWhite);
 
@@ -72,8 +65,7 @@ namespace Mill_AI {
 
                 case GameState.MillHasBeenArranged:
 
-                    OnePositionMove("MILL HAS BEEN ARRANGED\nWhich enemy's pawn do you want to remove from board?> ", true, 
-                        IsMoveValidInMillArrangedState, 
+                    OnMillHasBeenArrangedMove("MILL HAS BEEN ARRANGED\nWhich enemy's pawn do you want to remove from board?> ",
                         (pos) => {
                             KillEnemysPawn(pos);
                             ChangeGameState(LastState);
@@ -87,7 +79,7 @@ namespace Mill_AI {
             }
         }
 
-        private void OnePositionMove(string command, bool printBoard, Func<int, bool> IsMoveValidCondition, Action<int> OnValid) {
+        protected override void OnePositionMove(string command, bool printBoard, Func<int, bool> IsMoveValidCondition, Action<int> OnValid) {
             if (printBoard) {
                 MillBoard.Print();
             }
@@ -104,7 +96,7 @@ namespace Mill_AI {
             }
         }
 
-        private void TwoPositionsMove(int stageNum, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
+        protected override void TwoPositionsMove(int stageNum, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
             int firstPos;
             while (AS_LONG_AS_PLAYER_MAKES_INVALID_MOVES) {
                 Console.Write("STAGE " + stageNum + "\nWhich pawn do you want to move?> ");

@@ -15,7 +15,7 @@ namespace Mill_AI {
         private GameOfMill() {}
 
         public void Run() {
-            Console.Write(@"Tryb gry:
+            Console.Write(@"Game mode:
 [1] Human vs. human
 [2] Human (white/cyan) vs. AI (black/red)
 [3] AI (white/cyan) vs. human (black/red)
@@ -61,7 +61,7 @@ namespace Mill_AI {
 
             while(!HasPlayerLost(CurrentPlayer)) {
                 Board.Print();
-                Console.WriteLine("Now it's " + (CurrentPlayer.IsWhite ? "WHITE's" : "BLACK's") + " turn!");
+                Console.WriteLine("It's " + (CurrentPlayer.IsWhite ? "WHITE's" : "BLACK's") + " turn!");
                 CurrentPlayer.Move();
 
                 CurrentPlayer = CurrentPlayer == FirstPlayer ? SecondPlayer : FirstPlayer;

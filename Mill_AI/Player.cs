@@ -39,23 +39,53 @@ namespace Mill_AI {
             State = toState;
         }
 
-        protected bool IsMoveValidToEmptyNode(int pos) {
+        protected void OnFirstStageMove(string command, Action<int> OnValid) => OnePositionMove(command, false,
+            FirstStageIsMoveValid, OnValid);
+
+        protected void OnSecondStageMove(Action<int, int> OnValid) => TwoPositionsMove(2, SecondStageIsFirstMoveValid,
+            SecondStageIsSecondMoveValid, OnValid);
+
+        protected void OnThirdStageMove(Action<int, int> OnValid) => TwoPositionsMove(3, ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid);
+
+        protected void OnMillHasBeenArrangedMove(string command, Action<int> OnValid) => OnePositionMove(command, true, IsMoveValidInMillArrangedState, OnValid);
+
+        protected virtual void OnePositionMove(string command, bool printBoard, Func<int, bool> IsMoveValidCondition, Action<int> OnValid) {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void TwoPositionsMove(int stageNum, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
+            throw new NotImplementedException();
+        }
+
+        private bool IsMoveValidInMillArrangedState(int pos) => !IsNodeEmpty(pos) && !IsMoveValidNodeIsYourColor(pos) && !IsStayedMill(pos);
+
+        private bool FirstStageIsMoveValid(int pos) => IsMoveValidToEmptyNode(pos);
+
+        private bool SecondStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos) && HasNodeAnyEmptyNeighbours(firstPos);
+
+        private bool SecondStageIsSecondMoveValid(int firstPos, int secondPos) => IsMoveValidStartAndEndPosSecondStage(firstPos, secondPos);
+
+        private bool ThirdStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos);
+
+        private bool ThirdStageIsSecondMoveValid(int secondPos) => IsMoveValidToEmptyNode(secondPos);
+
+        private bool IsMoveValidToEmptyNode(int pos) {
             return IsPosInRange(pos) && IsNodeEmpty(pos);
         }
 
-        protected bool IsMoveValidStartAndEndPosSecondStage(int startPos, int endPos) {
+        private bool IsMoveValidStartAndEndPosSecondStage(int startPos, int endPos) {
             return IsPosInRange(endPos) && IsNodeEmpty(endPos) && AreNodesNeighbours(startPos, endPos);
         }
 
-        protected bool IsMoveValidNodeIsYourColor(int pos) {
+        private bool IsMoveValidNodeIsYourColor(int pos) {
             return IsPosInRange(pos) && IsColorEqual(pos);
         }
 
-        protected bool IsKillingValid(int pos) {
+        private bool IsKillingValid(int pos) {
             return IsPosInRange(pos) && !IsColorEqual(pos);
         }
 
-        protected bool IsColorEqual(int pos) {
+        private bool IsColorEqual(int pos) {
             if(IsWhite) {
                 return Nodes[pos].State == NodeState.White;
             } else {
@@ -63,19 +93,19 @@ namespace Mill_AI {
             }
         }
 
-        protected bool IsNodeEmpty(int pos) {
+        private bool IsNodeEmpty(int pos) {
             return Nodes[pos].State == NodeState.NotFilled;
         }
 
-        protected bool HasNodeAnyEmptyNeighbours(int pos) {
+        private bool HasNodeAnyEmptyNeighbours(int pos) {
             return Nodes[pos].HasAnyEmptyNeighbours();
         }
 
-        protected bool IsPosInRange(int pos) {
+        private bool IsPosInRange(int pos) {
             return pos >= 0 && pos <= 23;
         }
 
-        protected bool AreNodesNeighbours(int pos1, int pos2) {
+        private bool AreNodesNeighbours(int pos1, int pos2) {
             return Nodes[pos1].IsNodeNeighbour(Nodes[pos2]);
         }
 
@@ -83,7 +113,7 @@ namespace Mill_AI {
             return Nodes[pos].IsNewMill();
         }
 
-        protected bool IsStayedMill(int pos) {
+        private bool IsStayedMill(int pos) {
             return Nodes[pos].IsStayedMill();
         }
 
@@ -97,15 +127,5 @@ namespace Mill_AI {
                 Enemy.ChangeGameState(GameState.ThirdStage);
             }
         }
-
-        protected bool IsMoveValidInMillArrangedState(int pos) => !IsNodeEmpty(pos) && !IsMoveValidNodeIsYourColor(pos) && !IsStayedMill(pos);
-
-        //protected Player GetEnemy() {
-        //    if (GameOfMill.FirstPlayer == this) {
-        //        return GameOfMill.SecondPlayer;
-        //    }
-
-        //    return GameOfMill.FirstPlayer;
-        //}
     }
 }
