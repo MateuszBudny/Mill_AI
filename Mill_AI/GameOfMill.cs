@@ -45,13 +45,13 @@ namespace Mill_AI {
             if(isFirstPlayerHuman) {
                 FirstPlayer = new HumanPlayer(true);
             } else {
-                FirstPlayer = new AIPlayer(true);
+                FirstPlayer = new AIPlayer(true, 4);
             }
 
             if(isSecondPlayerHuman) {
                 SecondPlayer = new HumanPlayer(false);
             } else {
-                SecondPlayer = new AIPlayer(false);
+                SecondPlayer = new AIPlayer(false, 4);
             }
 
             FirstPlayer.Enemy = SecondPlayer;
@@ -70,8 +70,8 @@ namespace Mill_AI {
             Console.WriteLine("Game over! Winner: " + (CurrentPlayer.Enemy.IsWhite ? "WHITE!" : "BLACK!"));
         }
 
-        private bool HasPlayerLost(Player player) {
-            return player.PawnsInHandNum == 0 && player.PawnsOnBoard == 2;
+        public bool HasPlayerLost(Player player) {
+            return player.PawnsInHandNum == 0 && player.PawnsOnBoardNum == 2;
         }
 
         private static GameOfMill instance;

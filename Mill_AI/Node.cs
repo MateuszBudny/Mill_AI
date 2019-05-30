@@ -106,5 +106,24 @@ namespace Mill_AI {
                     return ConsoleColor.White;
             }
         }
+
+        public List<Node> GetNeighbours() {
+            List<Node> neighbours = new List<Node>();
+
+            if(Left != null) {
+                neighbours.Add(Left);
+            }
+            if(Right != null) {
+                neighbours.Add(Right);
+            }
+            if(Up != null) {
+                neighbours.Add(Up);
+            }
+            if(Down != null) {
+                neighbours.Add(Down);
+            }
+
+            return neighbours;
+        }
     }
 }

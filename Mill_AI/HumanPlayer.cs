@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 namespace Mill_AI {
     class HumanPlayer : Player {
 
-        // here should be repeating the same move set as forbidden also
-        // and double mills
+        // TODO: repeating the same move set as forbidden
+        // TODO (?): double mills
 
         const bool AS_LONG_AS_PLAYER_MAKES_INVALID_MOVES = true;
 
@@ -19,58 +19,26 @@ namespace Mill_AI {
                 case GameState.FirstStage:
 
                     OnFirstStageMove("STAGE 1\nWhere should your pawn land? (left pawns: " + PawnsInHandNum + ")> ",
-                        (pos) => {
-                            Nodes[pos].SetColor(IsWhite);
-
-                            PawnsOnBoard++;
-                            if (--PawnsInHandNum <= 0) {
-                                ChangeGameState(GameState.SecondStage);
-                            }
-
-                            if (IsNewMill(pos)) {
-                                ChangeGameState(GameState.MillHasBeenArranged);
-                                Move();
-                            }
-                        });
+                        (firstPos) => OnValidFirstStageMove(firstPos));
 
                     break;
 
                 case GameState.SecondStage:
 
-                    OnSecondStageMove((firstPos, secondPos) => {
-                            Nodes[firstPos].SetEmpty();
-                            Nodes[secondPos].SetColor(IsWhite);
-
-                            if (IsNewMill(secondPos)) {
-                                ChangeGameState(GameState.MillHasBeenArranged);
-                                Move();
-                            }
-                        });
+                    OnSecondStageMove((firstPos, secondPos) => OnValidSecondStageMove(firstPos, secondPos));
 
                     break;
 
                 case GameState.ThirdStage:
 
-                    OnThirdStageMove((firstPos, secondPos) => {
-                            Nodes[firstPos].SetEmpty();
-                            Nodes[secondPos].SetColor(IsWhite);
-
-                            if (IsNewMill(secondPos)) {
-                                ChangeGameState(GameState.MillHasBeenArranged);
-                                Move();
-                            }
-                        });
+                    OnThirdStageMove((firstPos, secondPos) => OnValidThirdStageMove(firstPos, secondPos));
 
                     break;
 
                 case GameState.MillHasBeenArranged:
 
                     OnMillHasBeenArrangedMove("MILL HAS BEEN ARRANGED\nWhich enemy's pawn do you want to remove from board?> ",
-                        (pos) => {
-                            KillEnemysPawn(pos);
-                            ChangeGameState(LastState);
-                            ChangeEnemyToThirdStageIfPossible();
-                        });
+                        (firstPos) => OnValidMillHasBeenArranged(firstPos));
 
                     break;
 
@@ -79,7 +47,17 @@ namespace Mill_AI {
             }
         }
 
-        protected override void OnePositionMove(string command, bool printBoard, Func<int, bool> IsMoveValidCondition, Action<int> OnValid) {
+        private void OnFirstStageMove(string command, Action<int> OnValid) => OnePositionMove(command, false,
+            FirstStageIsMoveValid, OnValid);
+
+        private void OnSecondStageMove(Action<int, int> OnValid) => TwoPositionsMove(2, SecondStageIsFirstMoveValid,
+            SecondStageIsSecondMoveValid, OnValid);
+
+        private void OnThirdStageMove(Action<int, int> OnValid) => TwoPositionsMove(3, ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid);
+
+        private void OnMillHasBeenArrangedMove(string command, Action<int> OnValid) => OnePositionMove(command, true, IsMoveValidInMillArrangedState, OnValid);
+
+        private void OnePositionMove(string command, bool printBoard, Func<int, bool> IsMoveValidCondition, Action<int> OnValid) {
             if (printBoard) {
                 MillBoard.Print();
             }
@@ -96,7 +74,7 @@ namespace Mill_AI {
             }
         }
 
-        protected override void TwoPositionsMove(int stageNum, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
+        private void TwoPositionsMove(int stageNum, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
             int firstPos;
             while (AS_LONG_AS_PLAYER_MAKES_INVALID_MOVES) {
                 Console.Write("STAGE " + stageNum + "\nWhich pawn do you want to move?> ");

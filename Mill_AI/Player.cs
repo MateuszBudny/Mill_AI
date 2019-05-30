@@ -12,9 +12,9 @@ namespace Mill_AI {
         MillHasBeenArranged, // player has arranged a mill, so now he kills one of his enemy's pawn 
     }
 
-    public class Player {
+    public abstract class Player {
         public int PawnsInHandNum { get; set; }
-        public int PawnsOnBoard { get; set; }
+        public int PawnsOnBoardNum { get; set; }
         public GameState State { get; set; }
         public GameState LastState { get; set; }
         protected MillBoard MillBoard => GameOfMill.Instance.Board; 
@@ -24,7 +24,7 @@ namespace Mill_AI {
 
         public Player(bool isWhite) {
             PawnsInHandNum = 9;
-            PawnsOnBoard = 0;
+            PawnsOnBoardNum = 0;
             State = GameState.FirstStage;
             LastState = GameState.FirstStage;
             IsWhite = isWhite;
@@ -39,35 +39,57 @@ namespace Mill_AI {
             State = toState;
         }
 
-        protected void OnFirstStageMove(string command, Action<int> OnValid) => OnePositionMove(command, false,
-            FirstStageIsMoveValid, OnValid);
+        protected bool IsMoveValidInMillArrangedState(int pos) => !IsNodeEmpty(pos) && !IsMoveValidNodeIsYourColor(pos) && !IsStayedMill(pos);
 
-        protected void OnSecondStageMove(Action<int, int> OnValid) => TwoPositionsMove(2, SecondStageIsFirstMoveValid,
-            SecondStageIsSecondMoveValid, OnValid);
+        protected bool FirstStageIsMoveValid(int pos) => IsMoveValidToEmptyNode(pos);
 
-        protected void OnThirdStageMove(Action<int, int> OnValid) => TwoPositionsMove(3, ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid);
+        protected bool SecondStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos) && HasNodeAnyEmptyNeighbours(firstPos);
 
-        protected void OnMillHasBeenArrangedMove(string command, Action<int> OnValid) => OnePositionMove(command, true, IsMoveValidInMillArrangedState, OnValid);
+        protected bool SecondStageIsSecondMoveValid(int firstPos, int secondPos) => IsMoveValidStartAndEndPosSecondStage(firstPos, secondPos);
 
-        protected virtual void OnePositionMove(string command, bool printBoard, Func<int, bool> IsMoveValidCondition, Action<int> OnValid) {
-            throw new NotImplementedException();
+        protected bool ThirdStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos);
+
+        protected bool ThirdStageIsSecondMoveValid(int secondPos) => IsMoveValidToEmptyNode(secondPos);
+
+        protected void OnValidFirstStageMove(int firstPos) {
+            Nodes[firstPos].SetColor(IsWhite);
+
+            PawnsOnBoardNum++;
+            if (--PawnsInHandNum <= 0) {
+                ChangeGameState(GameState.SecondStage);
+            }
+
+            if (IsNewMill(firstPos)) {
+                ChangeGameState(GameState.MillHasBeenArranged);
+                Move();
+            }
         }
 
-        protected virtual void TwoPositionsMove(int stageNum, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
-            throw new NotImplementedException();
+        protected void OnValidSecondStageMove(int firstPos, int secondPos) {
+            Nodes[firstPos].SetEmpty();
+            Nodes[secondPos].SetColor(IsWhite);
+
+            if (IsNewMill(secondPos)) {
+                ChangeGameState(GameState.MillHasBeenArranged);
+                Move();
+            }
         }
 
-        private bool IsMoveValidInMillArrangedState(int pos) => !IsNodeEmpty(pos) && !IsMoveValidNodeIsYourColor(pos) && !IsStayedMill(pos);
+        protected void OnValidThirdStageMove(int firstPos, int secondPos) {
+            Nodes[firstPos].SetEmpty();
+            Nodes[secondPos].SetColor(IsWhite);
 
-        private bool FirstStageIsMoveValid(int pos) => IsMoveValidToEmptyNode(pos);
+            if (IsNewMill(secondPos)) {
+                ChangeGameState(GameState.MillHasBeenArranged);
+                Move();
+            }
+        }
 
-        private bool SecondStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos) && HasNodeAnyEmptyNeighbours(firstPos);
-
-        private bool SecondStageIsSecondMoveValid(int firstPos, int secondPos) => IsMoveValidStartAndEndPosSecondStage(firstPos, secondPos);
-
-        private bool ThirdStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos);
-
-        private bool ThirdStageIsSecondMoveValid(int secondPos) => IsMoveValidToEmptyNode(secondPos);
+        protected void OnValidMillHasBeenArranged(int firstPos) {
+            KillEnemysPawn(firstPos);
+            ChangeGameState(LastState);
+            ChangeEnemyToThirdStageIfPossible();
+        }
 
         private bool IsMoveValidToEmptyNode(int pos) {
             return IsPosInRange(pos) && IsNodeEmpty(pos);
@@ -109,7 +131,7 @@ namespace Mill_AI {
             return Nodes[pos1].IsNodeNeighbour(Nodes[pos2]);
         }
 
-        protected bool IsNewMill(int pos) {
+        public bool IsNewMill(int pos) {
             return Nodes[pos].IsNewMill();
         }
 
@@ -117,15 +139,18 @@ namespace Mill_AI {
             return Nodes[pos].IsStayedMill();
         }
 
-        protected void KillEnemysPawn(int pos) {
+        public void KillEnemysPawn(int pos) {
             Nodes[pos].SetEmpty();
-            Enemy.PawnsOnBoard--;
+            Enemy.PawnsOnBoardNum--;
         }
 
-        protected void ChangeEnemyToThirdStageIfPossible() {
-            if(Enemy.PawnsInHandNum == 0 && Enemy.PawnsOnBoard == 3) {
+        public bool ChangeEnemyToThirdStageIfPossible() {
+            if(Enemy.PawnsInHandNum == 0 && Enemy.PawnsOnBoardNum == 3) {
                 Enemy.ChangeGameState(GameState.ThirdStage);
+                return true;
             }
+
+            return false;
         }
     }
 }
