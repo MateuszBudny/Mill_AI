@@ -54,15 +54,10 @@ namespace Mill_AI {
             MillBoard.Print();
 
             if (currentDepth == 0 || GameOfMill.Instance.HasPlayerLost(currentPlayer)) {
-                Console.WriteLine("evaluate static: " + EvaluateStatic());
-                Console.ReadKey();
                 return (EvaluateStatic(), new Move());
             }
 
             (int bestEvaluation, Move bestMove) = EvaluateChildren(currentDepth, currentPlayer, reverts);
-            Console.WriteLine("evaluate children: " + bestEvaluation);
-            Console.ReadKey();
-
             return (bestEvaluation, bestMove);
         }
 
