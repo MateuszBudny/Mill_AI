@@ -45,13 +45,13 @@ namespace Mill_AI {
             if(isFirstPlayerHuman) {
                 FirstPlayer = new HumanPlayer(true);
             } else {
-                FirstPlayer = new AIPlayer(true, 4);
+                FirstPlayer = new MinimaxAI(true, 4);
             }
 
             if(isSecondPlayerHuman) {
                 SecondPlayer = new HumanPlayer(false);
             } else {
-                SecondPlayer = new AIPlayer(false, 4);
+                SecondPlayer = new MinimaxAI(false, 4);
             }
 
             FirstPlayer.Enemy = SecondPlayer;
@@ -72,6 +72,7 @@ namespace Mill_AI {
                 CurrentPlayer = CurrentPlayer == FirstPlayer ? SecondPlayer : FirstPlayer;
             }
 
+            Board.Print();
             Console.WriteLine("Game over! Winner: " + (CurrentPlayer.Enemy.IsWhite ? "WHITE!" : "BLACK!"));
         }
 

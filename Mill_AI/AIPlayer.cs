@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Mill_AI {
-    class AIPlayer : Player {
+    public abstract class AIPlayer : Player {
 
         protected int maxDepth;
         protected Random rand = new Random();
@@ -26,8 +26,10 @@ namespace Mill_AI {
             skipCounter = 0;
 
             Move bestMove;
-            (_, bestMove) = Minimax(maxDepth, this, new Stack<List<Action>>());
+            int bestEvaluation;
+            (bestEvaluation, bestMove) = GetBestMove(maxDepth, this, new Stack<List<Action>>());
             Console.WriteLine("AI move: " + bestMove);
+            Console.WriteLine("Its evaluation: " + bestEvaluation);
             MakeMove(bestMove);
         }
 
@@ -62,20 +64,9 @@ namespace Mill_AI {
             }
         }
 
-        private (int bestEvaluation, Move bestMove) Minimax(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
-            if (currentDepth == 0 || GameOfMill.Instance.HasPlayerLost(currentPlayer)) {
-                //PrintWithSkip("evaluate static: " + EvaluateStatic() + "\nAI in hands: " + PawnsInHandNum + "\nAI on board: " + PawnsOnBoardNum +
-                    //"\nEnemy in hands: " + Enemy.PawnsInHandNum + "\nEnemy on board: " + Enemy.PawnsOnBoardNum);
-                return (EvaluateStatic(), new Move());
-            }
+        protected abstract (int bestEvaluation, Move bestMove) GetBestMove(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts);
 
-            (int bestEvaluation, Move bestMove) = EvaluateChildren(currentDepth, currentPlayer, reverts);
-            //PrintWithSkip("evaluate children: " + bestEvaluation);
-
-            return (bestEvaluation, bestMove);
-        }
-
-        private (int bestEvaluation, Move bestMove) EvaluateChildren(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
+        protected (int bestEvaluation, Move bestMove) EvaluateChildren(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
 
             int bestEvaluation;
             switch (currentPlayer.State) {
@@ -103,12 +94,12 @@ namespace Mill_AI {
                                 currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
                                 reverts.Push(newRevert);
-                                (bestEvaluation, _) = Minimax(currentDepth, currentPlayer, reverts);
+                                (bestEvaluation, _) = GetBestMove(currentDepth, currentPlayer, reverts);
                                 return bestEvaluation;
                             }
 
                             reverts.Push(newRevert);
-                            (bestEvaluation, _) = Minimax(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                            (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
                             return bestEvaluation;
                         },
                         currentDepth, currentPlayer, reverts);
@@ -130,12 +121,12 @@ namespace Mill_AI {
                             currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
                             reverts.Push(newRevert);
-                            (bestEvaluation, _) = Minimax(currentDepth, currentPlayer, reverts);
+                            (bestEvaluation, _) = GetBestMove(currentDepth, currentPlayer, reverts);
                             return bestEvaluation;
                         }
 
                         reverts.Push(newRevert);
-                        (bestEvaluation, _) = Minimax(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                        (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
                         return bestEvaluation;
                     },
                     currentDepth, currentPlayer, reverts);
@@ -157,12 +148,12 @@ namespace Mill_AI {
                             currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
                             reverts.Push(newRevert);
-                            (bestEvaluation, _) = Minimax(currentDepth, currentPlayer, reverts);
+                            (bestEvaluation, _) = GetBestMove(currentDepth, currentPlayer, reverts);
                             return bestEvaluation;
                         }
 
                         reverts.Push(newRevert);
-                        (bestEvaluation, _) = Minimax(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                        (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
                         return bestEvaluation;
                     },
                     currentDepth, currentPlayer, reverts);
@@ -187,7 +178,7 @@ namespace Mill_AI {
                             }
 
                             reverts.Push(newRevert);
-                            (bestEvaluation, _) = Minimax(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                            (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
                             return bestEvaluation;
                         },
                         currentDepth, currentPlayer, reverts);
@@ -197,7 +188,7 @@ namespace Mill_AI {
             }
         }
 
-        private int EvaluateStatic() {
+        protected int EvaluateStatic() {
             return (PawnsInHandNum + PawnsOnBoardNum) - (Enemy.PawnsInHandNum + Enemy.PawnsOnBoardNum);
         }
 
@@ -205,126 +196,19 @@ namespace Mill_AI {
             OnePositionMove(currentPlayer.FirstStageIsMoveValid, OnValid, currentDepth, currentPlayer, reverts);
 
         protected (int bestEvaluation, Move bestMove) OnSecondStageMove(Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            TwoPositionsMove(currentPlayer.SecondStageIsFirstMoveValid, currentPlayer.SecondStageIsSecondMoveValid, OnValid, currentDepth, currentPlayer, reverts);
+            TwoPositionsMove(true, currentPlayer.SecondStageIsFirstMoveValid, currentPlayer.SecondStageIsSecondMoveValid, OnValid, currentDepth, currentPlayer, reverts);
 
         protected (int bestEvaluation, Move bestMove) OnThirdStageMove(Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            TwoPositionsMove(currentPlayer.ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid, currentDepth, currentPlayer, reverts);
+            TwoPositionsMove(false, currentPlayer.ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid, currentDepth, currentPlayer, reverts);
 
-        protected (int bestEvaluation, Move bestMove) OnMillHasBeenArrangedMove(Func<int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            OnePositionMove(currentPlayer.IsMoveValidInMillArrangedState, OnValid, currentDepth, currentPlayer, reverts);
+        protected (int bestEvaluation, Move bestMove) OnMillHasBeenArrangedMove(Func<int, int> OnValid, int currentDepth, Player currentPlayer, 
+            Stack<List<Action>> reverts) => OnePositionMove(currentPlayer.IsMoveValidInMillArrangedState, OnValid, currentDepth, currentPlayer, reverts);
 
-        protected (int bestEvaluation, Move bestMove) OnePositionMove(Func<int, bool> IsMoveValidCondition, Func<int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
-            List<Move> bestMoves = new List<Move>();
+        protected abstract (int bestEvaluation, Move bestMove) OnePositionMove(Func<int, bool> IsMoveValidCondition, Func<int, int> OnValid, 
+            int currentDepth, Player currentPlayer, Stack<List<Action>> reverts);
 
-            if (currentPlayer == this) {
-                int maxEvaluation = int.MinValue;
-                int pos;
-                int evaluation;
-                foreach (Node node in Nodes) {
-                    pos = node.Id;
-                    if (IsMoveValidCondition(pos)) {
-                        evaluation = OnValid(pos);
-                        if(evaluation == maxEvaluation) {
-                            bestMoves.Add(new Move(pos));
-                        }
-                        if (evaluation > maxEvaluation) {
-                            maxEvaluation = evaluation;
-                            bestMoves.Clear();
-                            bestMoves.Add(new Move(pos));
-                        }
-                        Revert(reverts);
-                    }
-                }
-
-                return (maxEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
-            }
-
-            else {
-                int minEvaluation = int.MaxValue;
-                int pos;
-                int evaluation;
-                foreach (Node node in Nodes) {
-                    pos = node.Id;
-                    if (IsMoveValidCondition(pos)) {
-                        evaluation = OnValid(pos);
-                        if (evaluation == minEvaluation) {
-                            bestMoves.Add(new Move(pos));
-                        }
-                        if (evaluation < minEvaluation) {
-                            minEvaluation = evaluation;
-                            bestMoves.Clear();
-                            bestMoves.Add(new Move(pos));
-                        }
-                        Revert(reverts);
-                    }
-                }
-
-                return (minEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
-            }
-        }
-
-        protected (int bestEvaluation, Move bestMove) TwoPositionsMove(Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
-            List<Move> bestMoves = new List<Move>();
-
-            if (currentPlayer == this) {
-                int maxEvaluation = int.MinValue;
-                int firstPos;
-                int secondPos;
-                int evaluation;
-                foreach (Node firstNode in Nodes) {
-                    firstPos = firstNode.Id;
-                    if (IsFirstMoveValidCondition(firstPos)) {
-                        // TODO: in second stage take only those nodes, that are neighbours to first node.
-                        foreach (Node secondNode in Nodes) {
-                            secondPos = secondNode.Id;
-                            if (IsSecondMoveValid(firstPos, secondPos)) {
-                                evaluation = OnValid(firstPos, secondPos);
-                                if (evaluation == maxEvaluation) {
-                                    bestMoves.Add(new Move(firstPos, secondPos));
-                                }
-                                if (evaluation > maxEvaluation) {
-                                    maxEvaluation = evaluation;
-                                    bestMoves.Clear();
-                                    bestMoves.Add(new Move(firstPos, secondPos));
-                                }
-                                Revert(reverts);
-                            }
-                        }
-                    }
-                }
-
-                return (maxEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
-            }
-
-            else {
-                int minEvaluation = int.MaxValue;
-                int firstPos;
-                int secondPos;
-                int evaluation;
-                foreach (Node firstNode in Nodes) {
-                    firstPos = firstNode.Id;
-                    if (IsFirstMoveValidCondition(firstPos)) {
-                        foreach (Node secondNode in Nodes) {
-                            secondPos = secondNode.Id;
-                            if (IsSecondMoveValid(firstPos, secondPos)) {
-                                evaluation = OnValid(firstPos, secondPos);
-                                if (evaluation == minEvaluation) {
-                                    bestMoves.Add(new Move(firstPos, secondPos));
-                                }
-                                if (evaluation < minEvaluation) {
-                                    minEvaluation = evaluation;
-                                    bestMoves.Clear();
-                                    bestMoves.Add(new Move(firstPos, secondPos));
-                                }
-                                Revert(reverts);
-                            }
-                        }
-                    }
-                }
-
-                return (minEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
-            }
-        }
+        protected abstract (int bestEvaluation, Move bestMove) TwoPositionsMove(bool considerOnlyNeighboursAsSecondMove, Func<int, bool> IsFirstMoveValidCondition, 
+            Func<int, int, bool> IsSecondMoveValid, Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts);
 
         protected void Revert(Stack<List<Action>> reverts) {
             foreach (Action revert in reverts.Pop()) {

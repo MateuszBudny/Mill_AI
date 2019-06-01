@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Mill_AI {
-    class Move {
+    public class Move {
         public int FirstPos { get; set; }
         public int SecondPos { get; set; }
 

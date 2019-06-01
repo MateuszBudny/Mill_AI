@@ -50,6 +50,7 @@
     <Compile Include="GameOfMill.cs" />
     <Compile Include="HumanPlayer.cs" />
     <Compile Include="MillBoard.cs" />
+    <Compile Include="MinimaxAI.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Player.cs" />
