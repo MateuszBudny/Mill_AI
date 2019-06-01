@@ -14,6 +14,16 @@ namespace Mill_AI {
             SecondPos = -1;
         }
 
+        public Move(int firstPos) {
+            FirstPos = firstPos;
+            SecondPos = -1;
+        }
+
+        public Move(int firstPos, int secondPos) {
+            FirstPos = firstPos;
+            SecondPos = secondPos;
+        }
+
         public override string ToString() {
             return "FirstPos: " + FirstPos + ", SecondPos: " + SecondPos;
         }

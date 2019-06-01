@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 namespace Mill_AI {
     class AIPlayer : Player {
 
-        private int maxDepth;
+        protected int maxDepth;
+        protected Random rand = new Random();
 
         // variables for skipping printing function
         private bool skip = false;
@@ -213,7 +214,7 @@ namespace Mill_AI {
             OnePositionMove(currentPlayer.IsMoveValidInMillArrangedState, OnValid, currentDepth, currentPlayer, reverts);
 
         protected (int bestEvaluation, Move bestMove) OnePositionMove(Func<int, bool> IsMoveValidCondition, Func<int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
-            Move bestMove = new Move();
+            List<Move> bestMoves = new List<Move>();
 
             if (currentPlayer == this) {
                 int maxEvaluation = int.MinValue;
@@ -223,15 +224,19 @@ namespace Mill_AI {
                     pos = node.Id;
                     if (IsMoveValidCondition(pos)) {
                         evaluation = OnValid(pos);
-                        if(evaluation > maxEvaluation) {
+                        if(evaluation == maxEvaluation) {
+                            bestMoves.Add(new Move(pos));
+                        }
+                        if (evaluation > maxEvaluation) {
                             maxEvaluation = evaluation;
-                            bestMove.FirstPos = pos;
+                            bestMoves.Clear();
+                            bestMoves.Add(new Move(pos));
                         }
                         Revert(reverts);
                     }
                 }
 
-                return (maxEvaluation, bestMove);
+                return (maxEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
             }
 
             else {
@@ -242,20 +247,24 @@ namespace Mill_AI {
                     pos = node.Id;
                     if (IsMoveValidCondition(pos)) {
                         evaluation = OnValid(pos);
+                        if (evaluation == minEvaluation) {
+                            bestMoves.Add(new Move(pos));
+                        }
                         if (evaluation < minEvaluation) {
                             minEvaluation = evaluation;
-                            bestMove.FirstPos = pos;
+                            bestMoves.Clear();
+                            bestMoves.Add(new Move(pos));
                         }
                         Revert(reverts);
                     }
                 }
 
-                return (minEvaluation, bestMove);
+                return (minEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
             }
         }
 
         protected (int bestEvaluation, Move bestMove) TwoPositionsMove(Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
-            Move bestMove = new Move();
+            List<Move> bestMoves = new List<Move>();
 
             if (currentPlayer == this) {
                 int maxEvaluation = int.MinValue;
@@ -270,10 +279,13 @@ namespace Mill_AI {
                             secondPos = secondNode.Id;
                             if (IsSecondMoveValid(firstPos, secondPos)) {
                                 evaluation = OnValid(firstPos, secondPos);
-                                if(evaluation > maxEvaluation) {
+                                if (evaluation == maxEvaluation) {
+                                    bestMoves.Add(new Move(firstPos, secondPos));
+                                }
+                                if (evaluation > maxEvaluation) {
                                     maxEvaluation = evaluation;
-                                    bestMove.FirstPos = firstPos;
-                                    bestMove.SecondPos = secondPos;
+                                    bestMoves.Clear();
+                                    bestMoves.Add(new Move(firstPos, secondPos));
                                 }
                                 Revert(reverts);
                             }
@@ -281,7 +293,7 @@ namespace Mill_AI {
                     }
                 }
 
-                return (maxEvaluation, bestMove);
+                return (maxEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
             }
 
             else {
@@ -296,10 +308,13 @@ namespace Mill_AI {
                             secondPos = secondNode.Id;
                             if (IsSecondMoveValid(firstPos, secondPos)) {
                                 evaluation = OnValid(firstPos, secondPos);
+                                if (evaluation == minEvaluation) {
+                                    bestMoves.Add(new Move(firstPos, secondPos));
+                                }
                                 if (evaluation < minEvaluation) {
                                     minEvaluation = evaluation;
-                                    bestMove.FirstPos = firstPos;
-                                    bestMove.SecondPos = secondPos;
+                                    bestMoves.Clear();
+                                    bestMoves.Add(new Move(firstPos, secondPos));
                                 }
                                 Revert(reverts);
                             }
@@ -307,7 +322,7 @@ namespace Mill_AI {
                     }
                 }
 
-                return (minEvaluation, bestMove);
+                return (minEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
             }
         }
 
