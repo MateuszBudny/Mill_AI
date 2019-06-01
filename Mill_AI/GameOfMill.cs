@@ -62,6 +62,11 @@ namespace Mill_AI {
             while(!HasPlayerLost(CurrentPlayer)) {
                 Board.Print();
                 Console.WriteLine("It's " + (CurrentPlayer.IsWhite ? "WHITE's" : "BLACK's") + " turn!");
+                Console.WriteLine(GetNameOfStage(CurrentPlayer.State));
+                Console.WriteLine("Pawns in hands: " + CurrentPlayer.PawnsInHandNum);
+                Console.WriteLine("Pawns on board: " + CurrentPlayer.PawnsOnBoardNum);
+                Console.WriteLine("Enemy's pawns in hands: " + CurrentPlayer.Enemy.PawnsInHandNum);
+                Console.WriteLine("Enemy's pawns on board: " + CurrentPlayer.Enemy.PawnsOnBoardNum);
                 CurrentPlayer.Move();
 
                 CurrentPlayer = CurrentPlayer == FirstPlayer ? SecondPlayer : FirstPlayer;
@@ -72,6 +77,21 @@ namespace Mill_AI {
 
         public bool HasPlayerLost(Player player) {
             return player.PawnsInHandNum == 0 && player.PawnsOnBoardNum == 2;
+        }
+
+        private string GetNameOfStage(GameState gameState) {
+            switch(gameState) {
+                case GameState.FirstStage:
+                    return "STAGE 1";
+                case GameState.SecondStage:
+                    return "STAGE 2";
+                case GameState.ThirdStage:
+                    return "STAGE 3";
+                case GameState.MillHasBeenArranged:
+                    return "MILL HAS BEEN ARRANGED!";
+                default:
+                    return "UKNOWN STAGE";
+            }
         }
 
         private static GameOfMill instance;

@@ -13,5 +13,9 @@ namespace Mill_AI {
             FirstPos = -1;
             SecondPos = -1;
         }
+
+        public override string ToString() {
+            return "FirstPos: " + FirstPos + ", SecondPos: " + SecondPos;
+        }
     }
 }

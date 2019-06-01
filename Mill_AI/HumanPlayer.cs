@@ -18,7 +18,7 @@ namespace Mill_AI {
             switch (State) {
                 case GameState.FirstStage:
 
-                    OnFirstStageMove("STAGE 1\nWhere should your pawn land? (left pawns: " + PawnsInHandNum + ")> ",
+                    OnFirstStageMove("Where should your pawn land? (left pawns: " + PawnsInHandNum + ")> ",
                         (firstPos) => OnValidFirstStageMove(firstPos));
 
                     break;
@@ -37,7 +37,7 @@ namespace Mill_AI {
 
                 case GameState.MillHasBeenArranged:
 
-                    OnMillHasBeenArrangedMove("MILL HAS BEEN ARRANGED\nWhich enemy's pawn do you want to remove from board?> ",
+                    OnMillHasBeenArrangedMove("Which enemy's pawn do you want to remove from board?> ",
                         (firstPos) => OnValidMillHasBeenArranged(firstPos));
 
                     break;
@@ -50,10 +50,10 @@ namespace Mill_AI {
         private void OnFirstStageMove(string command, Action<int> OnValid) => OnePositionMove(command, false,
             FirstStageIsMoveValid, OnValid);
 
-        private void OnSecondStageMove(Action<int, int> OnValid) => TwoPositionsMove(2, SecondStageIsFirstMoveValid,
+        private void OnSecondStageMove(Action<int, int> OnValid) => TwoPositionsMove(SecondStageIsFirstMoveValid,
             SecondStageIsSecondMoveValid, OnValid);
 
-        private void OnThirdStageMove(Action<int, int> OnValid) => TwoPositionsMove(3, ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid);
+        private void OnThirdStageMove(Action<int, int> OnValid) => TwoPositionsMove(ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid);
 
         private void OnMillHasBeenArrangedMove(string command, Action<int> OnValid) => OnePositionMove(command, true, IsMoveValidInMillArrangedState, OnValid);
 
@@ -74,10 +74,10 @@ namespace Mill_AI {
             }
         }
 
-        private void TwoPositionsMove(int stageNum, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
+        private void TwoPositionsMove(Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid, Action<int, int> OnValid) {
             int firstPos;
             while (AS_LONG_AS_PLAYER_MAKES_INVALID_MOVES) {
-                Console.Write("STAGE " + stageNum + "\nWhich pawn do you want to move?> ");
+                Console.Write("Which pawn do you want to move?> ");
                 firstPos = int.Parse(Console.ReadLine());
                 if (IsFirstMoveValidCondition(firstPos)) {
                     break;

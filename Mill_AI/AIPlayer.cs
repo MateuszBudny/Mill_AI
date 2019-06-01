@@ -9,13 +9,24 @@ namespace Mill_AI {
 
         private int maxDepth;
 
+        // variables for skipping printing function
+        private bool skip = false;
+        private bool skip50 = false;
+        private int skipCounter = 0;
+        private const int SKIP_NUM = 100;
+
         public AIPlayer(bool isWhite, int maxDepth) : base(isWhite) {
             this.maxDepth = maxDepth;
         }
 
         public override void Move() {
+            skip = false;
+            skip50 = false;
+            skipCounter = 0;
+
             Move bestMove;
             (_, bestMove) = Minimax(maxDepth, this, new Stack<List<Action>>());
+            Console.WriteLine("AI move: " + bestMove);
             MakeMove(bestMove);
         }
 
@@ -51,13 +62,15 @@ namespace Mill_AI {
         }
 
         private (int bestEvaluation, Move bestMove) Minimax(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
-            MillBoard.Print();
-
             if (currentDepth == 0 || GameOfMill.Instance.HasPlayerLost(currentPlayer)) {
+                //PrintWithSkip("evaluate static: " + EvaluateStatic() + "\nAI in hands: " + PawnsInHandNum + "\nAI on board: " + PawnsOnBoardNum +
+                    //"\nEnemy in hands: " + Enemy.PawnsInHandNum + "\nEnemy on board: " + Enemy.PawnsOnBoardNum);
                 return (EvaluateStatic(), new Move());
             }
 
             (int bestEvaluation, Move bestMove) = EvaluateChildren(currentDepth, currentPlayer, reverts);
+            //PrintWithSkip("evaluate children: " + bestEvaluation);
+
             return (bestEvaluation, bestMove);
         }
 
@@ -65,11 +78,12 @@ namespace Mill_AI {
 
             int bestEvaluation;
             switch (currentPlayer.State) {
+
+                // TODO: maybe separate reverts from actions?
                 case GameState.FirstStage:
 
                     return OnFirstStageMove(
                         (pos) => {
-                            // TODO: maybe separate reverts from actions?
                             List<Action> newRevert = new List<Action>();
 
                             newRevert.Add(() => Nodes[pos].SetEmpty());
@@ -167,7 +181,8 @@ namespace Mill_AI {
                             currentPlayer.ChangeGameState(currentPlayer.LastState);
 
                             if(currentPlayer.ChangeEnemyToThirdStageIfPossible()) {
-                                newRevert.Add(() => currentPlayer.Enemy.ChangeGameState(GameState.MillHasBeenArranged));
+                                GameState enemysPreviousState = currentPlayer.Enemy.LastState;
+                                newRevert.Add(() => currentPlayer.Enemy.ChangeGameState(enemysPreviousState));
                             }
 
                             reverts.Push(newRevert);
@@ -186,16 +201,16 @@ namespace Mill_AI {
         }
 
         protected (int bestEvaluation, Move bestMove) OnFirstStageMove(Func<int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            OnePositionMove(FirstStageIsMoveValid, OnValid, currentDepth, currentPlayer, reverts);
+            OnePositionMove(currentPlayer.FirstStageIsMoveValid, OnValid, currentDepth, currentPlayer, reverts);
 
         protected (int bestEvaluation, Move bestMove) OnSecondStageMove(Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            TwoPositionsMove(SecondStageIsFirstMoveValid, SecondStageIsSecondMoveValid, OnValid, currentDepth, currentPlayer, reverts);
+            TwoPositionsMove(currentPlayer.SecondStageIsFirstMoveValid, currentPlayer.SecondStageIsSecondMoveValid, OnValid, currentDepth, currentPlayer, reverts);
 
         protected (int bestEvaluation, Move bestMove) OnThirdStageMove(Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            TwoPositionsMove(ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid, currentDepth, currentPlayer, reverts);
+            TwoPositionsMove(currentPlayer.ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid, currentDepth, currentPlayer, reverts);
 
         protected (int bestEvaluation, Move bestMove) OnMillHasBeenArrangedMove(Func<int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            OnePositionMove(IsMoveValidInMillArrangedState, OnValid, currentDepth, currentPlayer, reverts);
+            OnePositionMove(currentPlayer.IsMoveValidInMillArrangedState, OnValid, currentDepth, currentPlayer, reverts);
 
         protected (int bestEvaluation, Move bestMove) OnePositionMove(Func<int, bool> IsMoveValidCondition, Func<int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
             Move bestMove = new Move();
@@ -299,6 +314,25 @@ namespace Mill_AI {
         protected void Revert(Stack<List<Action>> reverts) {
             foreach (Action revert in reverts.Pop()) {
                 revert();
+            }
+        }
+
+        protected void PrintWithSkip(string message) {
+            if (!skip && !skip50) {
+                MillBoard.Print();
+                Console.WriteLine(message);
+                string command = Console.ReadLine();
+                if (command == "s") {
+                    skip = true;
+                } else if (command == "d") {
+                    skip50 = true;
+                    skipCounter = 0;
+                }
+            } else if (skip50) {
+                skipCounter++;
+                if (skipCounter > SKIP_NUM) {
+                    skip50 = false;
+                }
             }
         }
     }

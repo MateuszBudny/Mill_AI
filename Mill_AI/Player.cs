@@ -39,17 +39,17 @@ namespace Mill_AI {
             State = toState;
         }
 
-        protected bool IsMoveValidInMillArrangedState(int pos) => !IsNodeEmpty(pos) && !IsMoveValidNodeIsYourColor(pos) && !IsStayedMill(pos);
+        public bool IsMoveValidInMillArrangedState(int pos) => !IsNodeEmpty(pos) && !IsMoveValidNodeIsYourColor(pos) && !IsStayedMill(pos);
 
-        protected bool FirstStageIsMoveValid(int pos) => IsMoveValidToEmptyNode(pos);
+        public bool FirstStageIsMoveValid(int pos) => IsMoveValidToEmptyNode(pos);
 
-        protected bool SecondStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos) && HasNodeAnyEmptyNeighbours(firstPos);
+        public bool SecondStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos) && HasNodeAnyEmptyNeighbours(firstPos);
 
-        protected bool SecondStageIsSecondMoveValid(int firstPos, int secondPos) => IsMoveValidStartAndEndPosSecondStage(firstPos, secondPos);
+        public bool SecondStageIsSecondMoveValid(int firstPos, int secondPos) => IsMoveValidStartAndEndPosSecondStage(firstPos, secondPos);
 
-        protected bool ThirdStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos);
+        public bool ThirdStageIsFirstMoveValid(int firstPos) => IsMoveValidNodeIsYourColor(firstPos);
 
-        protected bool ThirdStageIsSecondMoveValid(int secondPos) => IsMoveValidToEmptyNode(secondPos);
+        public bool ThirdStageIsSecondMoveValid(int secondPos) => IsMoveValidToEmptyNode(secondPos);
 
         protected void OnValidFirstStageMove(int firstPos) {
             Nodes[firstPos].SetColor(IsWhite);
