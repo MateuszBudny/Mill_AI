@@ -42,16 +42,16 @@ namespace Mill_AI {
         private void StartGame(bool isFirstPlayerHuman, bool isSecondPlayerHuman) {
             Board = new MillBoard();
 
-            if(isFirstPlayerHuman) {
+            if (isFirstPlayerHuman) {
                 FirstPlayer = new HumanPlayer(true);
             } else {
                 FirstPlayer = new MinimaxAI(true, 4);
             }
 
-            if(isSecondPlayerHuman) {
+            if (isSecondPlayerHuman) {
                 SecondPlayer = new HumanPlayer(false);
             } else {
-                SecondPlayer = new MinimaxAI(false, 4);
+                SecondPlayer = new MinimaxAlphaBetaAI(false, 6);
             }
 
             FirstPlayer.Enemy = SecondPlayer;
@@ -59,7 +59,7 @@ namespace Mill_AI {
 
             CurrentPlayer = FirstPlayer;
 
-            while(!HasPlayerLost(CurrentPlayer)) {
+            while (!IsGameOver(CurrentPlayer)) {
                 Board.Print();
                 Console.WriteLine("It's " + (CurrentPlayer.IsWhite ? "WHITE's" : "BLACK's") + " turn!");
                 Console.WriteLine(GetNameOfStage(CurrentPlayer.State));
@@ -73,11 +73,22 @@ namespace Mill_AI {
             }
 
             Board.Print();
-            Console.WriteLine("Game over! Winner: " + (CurrentPlayer.Enemy.IsWhite ? "WHITE!" : "BLACK!"));
+            if (!IsDraw()) {
+                Console.WriteLine("Game over! Winner: " + (CurrentPlayer.Enemy.IsWhite ? "WHITE!" : "BLACK!"));
+            } else {
+                Console.WriteLine("Draw!");
+            }
         }
+
+        public bool IsGameOver(Player player) => HasPlayerLost(player) || IsDraw();
 
         public bool HasPlayerLost(Player player) {
             return player.PawnsInHandNum == 0 && player.PawnsOnBoardNum == 2;
+        }
+
+        public bool IsDraw() {
+            return FirstPlayer.PawnsInHandNum + FirstPlayer.PawnsOnBoardNum == 3 &&
+                SecondPlayer.PawnsInHandNum + SecondPlayer.PawnsOnBoardNum == 3;
         }
 
         private string GetNameOfStage(GameState gameState) {

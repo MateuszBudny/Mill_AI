@@ -5,21 +5,21 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Mill_AI {
-    class MinimaxAI : AIPlayer {
+    class MinimaxAlphaBetaAI : MinimaxAI {
 
-        public MinimaxAI(bool isWhite, int maxDepth) : base(isWhite, maxDepth) { }
+        public MinimaxAlphaBetaAI(bool isWhite, int maxDepth) : base(isWhite, maxDepth) { }
 
         protected override (int bestEvaluation, Move bestMove) GetBestMove(RoundData roundData) =>
-            Minimax(roundData);
+             MinimaxAlphaBeta(new RoundData(roundData));
 
-        private (int bestEvaluation, Move bestMove) Minimax(RoundData roundData) {
+        private (int bestEvaluation, Move bestMove) MinimaxAlphaBeta(RoundData roundData) {
             if (roundData.CurrentDepth == 0 || GameOfMill.Instance.HasPlayerLost(roundData.CurrentPlayer)) {
                 //PrintWithSkip("evaluate static: " + EvaluateStatic() + "\nAI in hands: " + PawnsInHandNum + "\nAI on board: " + PawnsOnBoardNum +
                 //"\nEnemy in hands: " + Enemy.PawnsInHandNum + "\nEnemy on board: " + Enemy.PawnsOnBoardNum);
                 return (EvaluateStatic(), new Move());
             }
 
-            (int bestEvaluation, Move bestMove) = EvaluateChildren(roundData);
+            (int bestEvaluation, Move bestMove) = EvaluateChildren(new RoundData(roundData));
             //PrintWithSkip("evaluate children: " + bestEvaluation);
 
             return (bestEvaluation, bestMove);
@@ -35,6 +35,7 @@ namespace Mill_AI {
                 foreach (Node node in Nodes) {
                     pos = node.Id;
                     if (IsMoveValidCondition(pos)) {
+                        //Console.WriteLine("Player OnePositionMove, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta + ", Depth: " + roundData.CurrentDepth);
                         evaluation = OnValid(pos);
                         if (evaluation == maxEvaluation) {
                             bestMoves.Add(new Move(pos));
@@ -44,7 +45,13 @@ namespace Mill_AI {
                             bestMoves.Clear();
                             bestMoves.Add(new Move(pos));
                         }
+                        roundData.Alpha = Math.Max(roundData.Alpha, evaluation);
                         Revert(roundData.Reverts);
+                        if (roundData.Alpha >= roundData.Beta) {
+                            //Console.WriteLine("Player, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta);
+                            //Console.WriteLine("Player break!");
+                            break;
+                        }
                     }
                 }
 
@@ -56,6 +63,7 @@ namespace Mill_AI {
                 foreach (Node node in Nodes) {
                     pos = node.Id;
                     if (IsMoveValidCondition(pos)) {
+                       // Console.WriteLine("Enemy OnePositionMove, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta + ", Depth: " + roundData.CurrentDepth);
                         evaluation = OnValid(pos);
                         if (evaluation == minEvaluation) {
                             bestMoves.Add(new Move(pos));
@@ -65,7 +73,13 @@ namespace Mill_AI {
                             bestMoves.Clear();
                             bestMoves.Add(new Move(pos));
                         }
+                        roundData.Beta = Math.Min(roundData.Beta, evaluation);
                         Revert(roundData.Reverts);
+                        if (roundData.Alpha >= roundData.Beta) {
+                            //Console.WriteLine("Enemy, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta);
+                            //Console.WriteLine("Enemy break!");
+                            break;
+                        }
                     }
                 }
 
@@ -84,7 +98,7 @@ namespace Mill_AI {
                 foreach (Node firstNode in Nodes) {
                     firstPos = firstNode.Id;
                     if (IsFirstMoveValidCondition(firstPos)) {
-                        List<Node> NodesToConsider = considerOnlyNeighboursAsSecondMove ? firstNode.GetNeighbours() : Nodes; 
+                        List<Node> NodesToConsider = considerOnlyNeighboursAsSecondMove ? firstNode.GetNeighbours() : Nodes;
                         foreach (Node secondNode in NodesToConsider) {
                             secondPos = secondNode.Id;
                             if (IsSecondMoveValid(firstPos, secondPos)) {
@@ -97,12 +111,18 @@ namespace Mill_AI {
                                     bestMoves.Clear();
                                     bestMoves.Add(new Move(firstPos, secondPos));
                                 }
+                                roundData.Alpha = Math.Max(roundData.Alpha, evaluation);
                                 Revert(roundData.Reverts);
+                                if (roundData.Alpha >= roundData.Beta) {
+                                    //Console.WriteLine("Player, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta);
+                                    //Console.WriteLine("Player break!");
+                                    goto PlayerAfterForeaches; // break out of nested foreaches
+                                }
                             }
                         }
                     }
                 }
-
+                PlayerAfterForeaches:
                 return (maxEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
             } else {
                 int minEvaluation = int.MaxValue;
@@ -125,12 +145,18 @@ namespace Mill_AI {
                                     bestMoves.Clear();
                                     bestMoves.Add(new Move(firstPos, secondPos));
                                 }
+                                roundData.Beta = Math.Min(roundData.Beta, evaluation);
                                 Revert(roundData.Reverts);
+                                if (roundData.Alpha >= roundData.Beta) {
+                                    //Console.WriteLine("Enemy, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta);
+                                    //Console.WriteLine("Enemy break!");
+                                    goto EnemyAfterForeaches; // break out of nested foreaches
+                                }
                             }
                         }
                     }
                 }
-
+                EnemyAfterForeaches: 
                 return (minEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
             }
         }

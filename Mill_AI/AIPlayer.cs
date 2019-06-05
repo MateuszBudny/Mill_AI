@@ -27,7 +27,7 @@ namespace Mill_AI {
 
             Move bestMove;
             int bestEvaluation;
-            (bestEvaluation, bestMove) = GetBestMove(maxDepth, this, new Stack<List<Action>>());
+            (bestEvaluation, bestMove) = GetBestMove(new RoundData(maxDepth, this));
             Console.WriteLine("AI move: " + bestMove);
             Console.WriteLine("Its evaluation: " + bestEvaluation);
             MakeMove(bestMove);
@@ -64,45 +64,57 @@ namespace Mill_AI {
             }
         }
 
-        protected abstract (int bestEvaluation, Move bestMove) GetBestMove(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts);
+        protected abstract (int bestEvaluation, Move bestMove) GetBestMove(RoundData roundData);
 
-        protected (int bestEvaluation, Move bestMove) EvaluateChildren(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
+        protected (int bestEvaluation, Move bestMove) EvaluateChildren(RoundData roundData) {
 
             int bestEvaluation;
-            switch (currentPlayer.State) {
+            switch (roundData.CurrentPlayer.State) {
 
-                // TODO: maybe separate reverts from actions?
                 case GameState.FirstStage:
 
                     return OnFirstStageMove(
                         (pos) => {
+                            //if (roundData.CurrentPlayer == this) {
+                            //    Console.WriteLine("Player OnFirstStageMove, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta + ", Depth: " + roundData.CurrentDepth);
+                            //} else {
+                            //    Console.WriteLine("Enemy OnFirstStageMove, Alpha: " + roundData.Alpha + ", Beta: " + roundData.Beta + ", Depth: " + roundData.CurrentDepth);
+                            //}
+
                             List<Action> newRevert = new List<Action>();
 
                             newRevert.Add(() => Nodes[pos].SetEmpty());
-                            Nodes[pos].SetColor(currentPlayer.IsWhite);
+                            Nodes[pos].SetColor(roundData.CurrentPlayer.IsWhite);
 
-                            newRevert.Add(() => currentPlayer.PawnsOnBoardNum--);
-                            currentPlayer.PawnsOnBoardNum++;
-                            if (--currentPlayer.PawnsInHandNum <= 0) {
-                                newRevert.Add(() => currentPlayer.ChangeGameState(GameState.FirstStage));
-                                currentPlayer.ChangeGameState(GameState.SecondStage);
+                            newRevert.Add(() => roundData.CurrentPlayer.PawnsOnBoardNum--);
+                            roundData.CurrentPlayer.PawnsOnBoardNum++;
+                            if (--roundData.CurrentPlayer.PawnsInHandNum <= 0) {
+                                newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.FirstStage));
+                                roundData.CurrentPlayer.ChangeGameState(GameState.SecondStage);
                             }
-                            newRevert.Add(() => currentPlayer.PawnsInHandNum++);
+                            newRevert.Add(() => roundData.CurrentPlayer.PawnsInHandNum++);
 
-                            if (currentPlayer.IsNewMill(pos)) {
-                                newRevert.Add(() => currentPlayer.ChangeGameState(GameState.FirstStage));
-                                currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
+                            if (roundData.CurrentPlayer.IsNewMill(pos)) {
+                                newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.FirstStage));
+                                roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
-                                reverts.Push(newRevert);
-                                (bestEvaluation, _) = GetBestMove(currentDepth, currentPlayer, reverts);
+                                roundData.Reverts.Push(newRevert);
+                                //(T)Activator.CreateInstance(typeof(T), new object[] { weight });
+                                (bestEvaluation, _) = GetBestMove(new RoundData(roundData));
                                 return bestEvaluation;
                             }
 
-                            reverts.Push(newRevert);
-                            (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                            roundData.Reverts.Push(newRevert);
+                            //roundData.CurrentDepth--;
+                            //roundData.CurrentPlayer = roundData.CurrentPlayer == this ? Enemy : this;
+                            //(bestEvaluation, _) = GetBestMove(new RoundData(roundData));
+
+                            //(bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts));
+
+                            (bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts, roundData.Alpha, roundData.Beta));
                             return bestEvaluation;
                         },
-                        currentDepth, currentPlayer, reverts);
+                        roundData);
 
                 case GameState.SecondStage:
 
@@ -114,22 +126,22 @@ namespace Mill_AI {
                         Nodes[firstPos].SetEmpty();
 
                         newRevert.Add(() => Nodes[secondPos].SetEmpty());
-                        Nodes[secondPos].SetColor(currentPlayer.IsWhite);
+                        Nodes[secondPos].SetColor(roundData.CurrentPlayer.IsWhite);
 
-                        if (currentPlayer.IsNewMill(secondPos)) {
-                            newRevert.Add(() => currentPlayer.ChangeGameState(GameState.SecondStage));
-                            currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
+                        if (roundData.CurrentPlayer.IsNewMill(secondPos)) {
+                            newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.SecondStage));
+                            roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
-                            reverts.Push(newRevert);
-                            (bestEvaluation, _) = GetBestMove(currentDepth, currentPlayer, reverts);
+                            roundData.Reverts.Push(newRevert);
+                            (bestEvaluation, _) = GetBestMove(new RoundData(roundData));
                             return bestEvaluation;
                         }
 
-                        reverts.Push(newRevert);
-                        (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                        roundData.Reverts.Push(newRevert);
+                        (bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts, roundData.Alpha, roundData.Beta));
                         return bestEvaluation;
                     },
-                    currentDepth, currentPlayer, reverts);
+                    roundData);
 
                 case GameState.ThirdStage:
 
@@ -141,22 +153,22 @@ namespace Mill_AI {
                         Nodes[firstPos].SetEmpty();
 
                         newRevert.Add(() => Nodes[secondPos].SetEmpty());
-                        Nodes[secondPos].SetColor(currentPlayer.IsWhite);
+                        Nodes[secondPos].SetColor(roundData.CurrentPlayer.IsWhite);
 
                         if (IsNewMill(secondPos)) {
-                            newRevert.Add(() => currentPlayer.ChangeGameState(GameState.ThirdStage));
-                            currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
+                            newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.ThirdStage));
+                            roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
-                            reverts.Push(newRevert);
-                            (bestEvaluation, _) = GetBestMove(currentDepth, currentPlayer, reverts);
+                            roundData.Reverts.Push(newRevert);
+                            (bestEvaluation, _) = GetBestMove(new RoundData(roundData));
                             return bestEvaluation;
                         }
 
-                        reverts.Push(newRevert);
-                        (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                        roundData.Reverts.Push(newRevert);
+                        (bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts, roundData.Alpha, roundData.Beta));
                         return bestEvaluation;
                     },
-                    currentDepth, currentPlayer, reverts);
+                    roundData);
 
                 case GameState.MillHasBeenArranged:
 
@@ -166,22 +178,22 @@ namespace Mill_AI {
 
                             NodeState lastNodeState = Nodes[pos].State;
                             newRevert.Add(() => Nodes[pos].State = lastNodeState);
-                            newRevert.Add(() => currentPlayer.Enemy.PawnsOnBoardNum++);
-                            currentPlayer.KillEnemysPawn(pos);
+                            newRevert.Add(() => roundData.CurrentPlayer.Enemy.PawnsOnBoardNum++);
+                            roundData.CurrentPlayer.KillEnemysPawn(pos);
 
-                            newRevert.Add(() => currentPlayer.ChangeGameState(GameState.MillHasBeenArranged));
-                            currentPlayer.ChangeGameState(currentPlayer.LastState);
+                            newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged));
+                            roundData.CurrentPlayer.ChangeGameState(roundData.CurrentPlayer.LastState);
 
-                            if(currentPlayer.ChangeEnemyToThirdStageIfPossible()) {
-                                GameState enemysPreviousState = currentPlayer.Enemy.LastState;
-                                newRevert.Add(() => currentPlayer.Enemy.ChangeGameState(enemysPreviousState));
+                            if(roundData.CurrentPlayer.ChangeEnemyToThirdStageIfPossible()) {
+                                GameState enemysPreviousState = roundData.CurrentPlayer.Enemy.LastState;
+                                newRevert.Add(() => roundData.CurrentPlayer.Enemy.ChangeGameState(enemysPreviousState));
                             }
 
-                            reverts.Push(newRevert);
-                            (bestEvaluation, _) = GetBestMove(currentDepth - 1, (currentPlayer == this ? Enemy : this), reverts);
+                            roundData.Reverts.Push(newRevert);
+                            (bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts, roundData.Alpha, roundData.Beta));
                             return bestEvaluation;
                         },
-                        currentDepth, currentPlayer, reverts);
+                        roundData);
 
                 default:
                     throw new Exception("Your GameState is default. Something went wrong ¯\\_(ツ)_/¯ ");
@@ -192,23 +204,23 @@ namespace Mill_AI {
             return (PawnsInHandNum + PawnsOnBoardNum) - (Enemy.PawnsInHandNum + Enemy.PawnsOnBoardNum);
         }
 
-        protected (int bestEvaluation, Move bestMove) OnFirstStageMove(Func<int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            OnePositionMove(currentPlayer.FirstStageIsMoveValid, OnValid, currentDepth, currentPlayer, reverts);
+        protected (int bestEvaluation, Move bestMove) OnFirstStageMove(Func<int, int> OnValid, RoundData roundData) =>
+            OnePositionMove(roundData.CurrentPlayer.FirstStageIsMoveValid, OnValid, roundData);
 
-        protected (int bestEvaluation, Move bestMove) OnSecondStageMove(Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            TwoPositionsMove(true, currentPlayer.SecondStageIsFirstMoveValid, currentPlayer.SecondStageIsSecondMoveValid, OnValid, currentDepth, currentPlayer, reverts);
+        protected (int bestEvaluation, Move bestMove) OnSecondStageMove(Func<int, int, int> OnValid, RoundData roundData) =>
+            TwoPositionsMove(true, roundData.CurrentPlayer.SecondStageIsFirstMoveValid, roundData.CurrentPlayer.SecondStageIsSecondMoveValid, OnValid, roundData);
 
-        protected (int bestEvaluation, Move bestMove) OnThirdStageMove(Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) =>
-            TwoPositionsMove(false, currentPlayer.ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid, currentDepth, currentPlayer, reverts);
+        protected (int bestEvaluation, Move bestMove) OnThirdStageMove(Func<int, int, int> OnValid, RoundData roundData) =>
+            TwoPositionsMove(false, roundData.CurrentPlayer.ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid, roundData);
 
-        protected (int bestEvaluation, Move bestMove) OnMillHasBeenArrangedMove(Func<int, int> OnValid, int currentDepth, Player currentPlayer, 
-            Stack<List<Action>> reverts) => OnePositionMove(currentPlayer.IsMoveValidInMillArrangedState, OnValid, currentDepth, currentPlayer, reverts);
+        protected (int bestEvaluation, Move bestMove) OnMillHasBeenArrangedMove(Func<int, int> OnValid, RoundData roundData) =>
+            OnePositionMove(roundData.CurrentPlayer.IsMoveValidInMillArrangedState, OnValid, roundData);
 
         protected abstract (int bestEvaluation, Move bestMove) OnePositionMove(Func<int, bool> IsMoveValidCondition, Func<int, int> OnValid, 
-            int currentDepth, Player currentPlayer, Stack<List<Action>> reverts);
+            RoundData roundData);
 
         protected abstract (int bestEvaluation, Move bestMove) TwoPositionsMove(bool considerOnlyNeighboursAsSecondMove, Func<int, bool> IsFirstMoveValidCondition, 
-            Func<int, int, bool> IsSecondMoveValid, Func<int, int, int> OnValid, int currentDepth, Player currentPlayer, Stack<List<Action>> reverts);
+            Func<int, int, bool> IsSecondMoveValid, Func<int, int, int> OnValid, RoundData roundData);
 
         protected void Revert(Stack<List<Action>> reverts) {
             foreach (Action revert in reverts.Pop()) {
@@ -234,5 +246,16 @@ namespace Mill_AI {
                 }
             }
         }
+
+        //private RoundData GetProperNewRoundData(RoundData roundData) {
+        //    if (roundData.GetType() == typeof(RoundData)) {
+        //        return new RoundData(roundData);
+        //    } else if(roundData.GetType() == typeof(RoundDataMinimaxAlphaBeta)) {
+        //        return new RoundDataMinimaxAlphaBeta(roundData);
+        //    }
+
+        //    Console.WriteLine("GetProperNewRoundData doesn't work as it should.");
+        //    return null;
+        //}
     }
 }
