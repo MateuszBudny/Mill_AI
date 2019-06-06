@@ -20,13 +20,13 @@ namespace Mill_AI {
             Beta = int.MaxValue;
         }
 
-        //public RoundData(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
-        //    CurrentDepth = currentDepth;
-        //    CurrentPlayer = currentPlayer;
-        //    Reverts = reverts;
-        //    Alpha = int.MinValue;
-        //    Beta = int.MaxValue;
-        //}
+        public RoundData(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts) {
+            CurrentDepth = currentDepth;
+            CurrentPlayer = currentPlayer;
+            Reverts = reverts;
+            Alpha = int.MinValue;
+            Beta = int.MaxValue;
+        }
 
         public RoundData(int currentDepth, Player currentPlayer, Stack<List<Action>> reverts, int alpha, int beta) {
             CurrentDepth = currentDepth;
