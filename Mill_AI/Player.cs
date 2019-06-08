@@ -30,9 +30,7 @@ namespace Mill_AI {
             IsWhite = isWhite;
         }
 
-        public virtual void Move() {
-            throw new NotImplementedException();
-        }
+        public abstract void Move();
 
         public virtual void ChangeGameState(GameState toState) {
             LastState = State;

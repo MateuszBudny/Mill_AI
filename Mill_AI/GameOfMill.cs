@@ -51,7 +51,7 @@ namespace Mill_AI {
             if (isSecondPlayerHuman) {
                 SecondPlayer = new HumanPlayer(false);
             } else {
-                SecondPlayer = new MinimaxAlphaBetaAI(false, 6);
+                SecondPlayer = new MinimaxAI(false, 4);
             }
 
             FirstPlayer.Enemy = SecondPlayer;
@@ -91,7 +91,7 @@ namespace Mill_AI {
                 SecondPlayer.PawnsInHandNum + SecondPlayer.PawnsOnBoardNum == 3;
         }
 
-        private string GetNameOfStage(GameState gameState) {
+        public string GetNameOfStage(GameState gameState) {
             switch(gameState) {
                 case GameState.FirstStage:
                     return "STAGE 1";

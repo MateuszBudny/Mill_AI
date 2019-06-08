@@ -27,7 +27,7 @@ namespace Mill_AI {
 
             Move bestMove;
             int bestEvaluation;
-            (bestEvaluation, bestMove) = GetBestMove(new RoundData(maxDepth, this));
+            (bestEvaluation, bestMove) = GetBestMove(maxDepth, this);
             Console.WriteLine("AI move: " + bestMove);
             Console.WriteLine("Its evaluation: " + bestEvaluation);
             MakeMove(bestMove);
@@ -64,108 +64,92 @@ namespace Mill_AI {
             }
         }
 
-        protected abstract (int bestEvaluation, Move bestMove) GetBestMove(RoundData roundData);
+        protected abstract (int bestEvaluation, Move bestMove) GetBestMove(int currentDepth, Player currentPlayer);
 
-        protected Stack<List<Action>> MakeMoveReturnReverts(Move move, RoundData roundData) {
+        protected (List<Action> reverts, bool isMillHasBeenArrangedANextMove) MakeMoveReturnReverts(Move move, Player currentPlayer) {
 
-            int bestEvaluation;
             int firstPos = move.FirstPos;
             int secondPos = move.SecondPos;
-            List<Action> newRevert = new List<Action>();
+            List<Action> reverts = new List<Action>();
             NodeState lastNodeState;
-            switch (roundData.CurrentPlayer.State) {
+
+            switch (currentPlayer.State) {
 
                 case GameState.FirstStage:
 
-                    newRevert.Add(() => Nodes[firstPos].SetEmpty());
-                    Nodes[firstPos].SetColor(roundData.CurrentPlayer.IsWhite);
+                    reverts.Add(() => Nodes[firstPos].SetEmpty());
+                    Nodes[firstPos].SetColor(currentPlayer.IsWhite);
 
-                    newRevert.Add(() => roundData.CurrentPlayer.PawnsOnBoardNum--);
-                    roundData.CurrentPlayer.PawnsOnBoardNum++;
-                    if (--roundData.CurrentPlayer.PawnsInHandNum <= 0) {
-                        newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.FirstStage));
-                        roundData.CurrentPlayer.ChangeGameState(GameState.SecondStage);
+                    reverts.Add(() => currentPlayer.PawnsOnBoardNum--);
+                    currentPlayer.PawnsOnBoardNum++;
+                    if (--currentPlayer.PawnsInHandNum <= 0) {
+                        reverts.Add(() => currentPlayer.ChangeGameState(GameState.FirstStage));
+                        currentPlayer.ChangeGameState(GameState.SecondStage);
                     }
-                    newRevert.Add(() => roundData.CurrentPlayer.PawnsInHandNum++);
+                    reverts.Add(() => currentPlayer.PawnsInHandNum++);
 
-                    if (roundData.CurrentPlayer.IsNewMill(firstPos)) {
-                        newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.FirstStage));
-                        roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
+                    if (currentPlayer.IsNewMill(firstPos)) {
+                        reverts.Add(() => currentPlayer.ChangeGameState(GameState.FirstStage));
+                        currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
-                        roundData.Reverts.Push(newRevert);
-                        //(T)Activator.CreateInstance(typeof(T), new object[] { weight });
-                        return roundData.Reverts;
+                        return (reverts, true);
                     }
 
-                    roundData.Reverts.Push(newRevert);
-                    //roundData.CurrentDepth--;
-                    //roundData.CurrentPlayer = roundData.CurrentPlayer == this ? Enemy : this;
-                    //(bestEvaluation, _) = GetBestMove(new RoundData(roundData));
-
-                    //(bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts));
-
-                    return roundData.Reverts;
+                    return (reverts, false);
 
                 case GameState.SecondStage:
 
                     lastNodeState = Nodes[firstPos].State;
-                    newRevert.Add(() => Nodes[firstPos].State = lastNodeState);
+                    reverts.Add(() => Nodes[firstPos].State = lastNodeState);
                     Nodes[firstPos].SetEmpty();
 
-                    newRevert.Add(() => Nodes[secondPos].SetEmpty());
-                    Nodes[secondPos].SetColor(roundData.CurrentPlayer.IsWhite);
+                    reverts.Add(() => Nodes[secondPos].SetEmpty());
+                    Nodes[secondPos].SetColor(currentPlayer.IsWhite);
 
-                    if (roundData.CurrentPlayer.IsNewMill(secondPos)) {
-                        newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.SecondStage));
-                        roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
+                    if (currentPlayer.IsNewMill(secondPos)) {
+                        reverts.Add(() => currentPlayer.ChangeGameState(GameState.SecondStage));
+                        currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
-                        roundData.Reverts.Push(newRevert);
-                        return roundData.Reverts;
+                        return (reverts, true);
                     }
 
-                    roundData.Reverts.Push(newRevert);
-                    (bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts, roundData.Alpha, roundData.Beta));
-                    return roundData.Reverts;
+                    return (reverts, false);
 
                 case GameState.ThirdStage:
 
                     lastNodeState = Nodes[firstPos].State;
-                    newRevert.Add(() => Nodes[firstPos].State = lastNodeState);
+                    reverts.Add(() => Nodes[firstPos].State = lastNodeState);
                     Nodes[firstPos].SetEmpty();
 
-                    newRevert.Add(() => Nodes[secondPos].SetEmpty());
-                    Nodes[secondPos].SetColor(roundData.CurrentPlayer.IsWhite);
+                    reverts.Add(() => Nodes[secondPos].SetEmpty());
+                    Nodes[secondPos].SetColor(currentPlayer.IsWhite);
 
                     if (IsNewMill(secondPos)) {
-                        newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.ThirdStage));
-                        roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
+                        reverts.Add(() => currentPlayer.ChangeGameState(GameState.ThirdStage));
+                        currentPlayer.ChangeGameState(GameState.MillHasBeenArranged);
 
-                        roundData.Reverts.Push(newRevert);
-                        return roundData.Reverts;
+                        return (reverts, true);
                     }
 
-                    roundData.Reverts.Push(newRevert);
-                    (bestEvaluation, _) = GetBestMove(new RoundData(roundData.CurrentDepth - 1, roundData.CurrentPlayer == this ? Enemy : this, roundData.Reverts, roundData.Alpha, roundData.Beta));
-                    return roundData.Reverts;
+                    return (reverts, false);
 
                 case GameState.MillHasBeenArranged:
 
                     lastNodeState = Nodes[firstPos].State;
-                    newRevert.Add(() => Nodes[firstPos].State = lastNodeState);
-                    newRevert.Add(() => roundData.CurrentPlayer.Enemy.PawnsOnBoardNum++);
-                    roundData.CurrentPlayer.KillEnemysPawn(firstPos);
+                    reverts.Add(() => Nodes[firstPos].State = lastNodeState);
+                    reverts.Add(() => currentPlayer.Enemy.PawnsOnBoardNum++);
+                    currentPlayer.KillEnemysPawn(firstPos);
 
-                    newRevert.Add(() => roundData.CurrentPlayer.ChangeGameState(GameState.MillHasBeenArranged));
-                    roundData.CurrentPlayer.ChangeGameState(roundData.CurrentPlayer.LastState);
+                    reverts.Add(() => currentPlayer.ChangeGameState(GameState.MillHasBeenArranged));
+                    currentPlayer.ChangeGameState(currentPlayer.LastState);
 
-                    if(roundData.CurrentPlayer.ChangeEnemyToThirdStageIfPossible()) {
-                        GameState enemysPreviousState = roundData.CurrentPlayer.Enemy.LastState;
-                        newRevert.Add(() => roundData.CurrentPlayer.Enemy.ChangeGameState(enemysPreviousState));
+                    if(currentPlayer.ChangeEnemyToThirdStageIfPossible()) {
+                        GameState enemysPreviousState = currentPlayer.Enemy.LastState;
+                        Player enemy = currentPlayer.Enemy;
+                        reverts.Add(() => enemy.ChangeGameState(enemysPreviousState));
                     }
 
-                    roundData.Reverts.Push(newRevert);
-
-                    return roundData.Reverts;
+                    return (reverts, false);
 
                 default:
                     throw new Exception("Your GameState is default. Something went wrong ¯\\_(ツ)_/¯ ");
@@ -173,30 +157,83 @@ namespace Mill_AI {
             }
         }
 
+        protected List<Move> GetMoves(Player currentPlayer) {
+            switch (currentPlayer.State) {
+                case GameState.FirstStage:
+                    return OnFirstStageMove(currentPlayer);
+
+                case GameState.SecondStage:
+
+                    return OnSecondStageMove(currentPlayer);
+
+                case GameState.ThirdStage:
+
+                    return OnThirdStageMove(currentPlayer);
+
+                case GameState.MillHasBeenArranged:
+
+                    return OnMillHasBeenArrangedMove(currentPlayer);
+
+                default:
+                    throw new Exception("Your GameState is default. Something went wrong ¯\\_(ツ)_/¯ ");
+            }
+        }
+
         protected int EvaluateStatic() {
             return (PawnsInHandNum + PawnsOnBoardNum) - (Enemy.PawnsInHandNum + Enemy.PawnsOnBoardNum);
         }
 
-        protected List<Move> OnFirstStageMove(Func<int, int> OnValid, RoundData roundData) =>
-            OnePositionMove(roundData.CurrentPlayer.FirstStageIsMoveValid, OnValid, roundData);
+        protected List<Move> OnFirstStageMove(Player currentPlayer) =>
+            OnePositionMove(currentPlayer.FirstStageIsMoveValid);
 
-        protected List<Move> OnSecondStageMove(Func<int, int, int> OnValid, RoundData roundData) =>
-            TwoPositionsMove(true, roundData.CurrentPlayer.SecondStageIsFirstMoveValid, roundData.CurrentPlayer.SecondStageIsSecondMoveValid, OnValid, roundData);
+        protected List<Move> OnSecondStageMove(Player currentPlayer) =>
+            TwoPositionsMove(true, currentPlayer.SecondStageIsFirstMoveValid, currentPlayer.SecondStageIsSecondMoveValid);
 
-        protected List<Move> OnThirdStageMove(Func<int, int, int> OnValid, RoundData roundData) =>
-            TwoPositionsMove(false, roundData.CurrentPlayer.ThirdStageIsFirstMoveValid, (_, secondPos) => ThirdStageIsSecondMoveValid(secondPos), OnValid, roundData);
+        protected List<Move> OnThirdStageMove(Player currentPlayer) =>
+            TwoPositionsMove(false, currentPlayer.ThirdStageIsFirstMoveValid, (_, secondPos) => currentPlayer.ThirdStageIsSecondMoveValid(secondPos));
 
-        protected List<Move> OnMillHasBeenArrangedMove(Func<int, int> OnValid, RoundData roundData) =>
-            OnePositionMove(roundData.CurrentPlayer.IsMoveValidInMillArrangedState, OnValid, roundData);
+        protected List<Move> OnMillHasBeenArrangedMove(Player currentPlayer) =>
+            OnePositionMove(currentPlayer.IsMoveValidInMillArrangedState);
 
-        protected abstract List<Move> OnePositionMove(Func<int, bool> IsMoveValidCondition, Func<int, int> OnValid, 
-            RoundData roundData);
+        protected List<Move> OnePositionMove(Func<int, bool> IsMoveValidCondition) {
 
-        protected abstract List<Move> TwoPositionsMove(bool considerOnlyNeighboursAsSecondMove, Func<int, bool> IsFirstMoveValidCondition, 
-            Func<int, int, bool> IsSecondMoveValid, Func<int, int, int> OnValid, RoundData roundData);
+            List<Move> moves = new List<Move>();
 
-        protected void Revert(Stack<List<Action>> reverts) {
-            foreach (Action revert in reverts.Pop()) {
+            int pos;
+            foreach (Node node in Nodes) {
+                pos = node.Id;
+                if (IsMoveValidCondition(pos)) {
+                    moves.Add(new Move(pos));
+                }
+            }
+
+            return moves;
+        }
+
+        protected List<Move> TwoPositionsMove(bool considerOnlyNeighboursAsSecondMove, Func<int, bool> IsFirstMoveValidCondition, Func<int, int, bool> IsSecondMoveValid) {
+
+            List<Move> moves = new List<Move>();
+
+            int firstPos;
+            int secondPos;
+            foreach (Node firstNode in Nodes) {
+                firstPos = firstNode.Id;
+                if (IsFirstMoveValidCondition(firstPos)) {
+                    List<Node> NodesToConsider = considerOnlyNeighboursAsSecondMove ? firstNode.GetNeighbours() : Nodes;
+                    foreach (Node secondNode in NodesToConsider) {
+                        secondPos = secondNode.Id;
+                        if (IsSecondMoveValid(firstPos, secondPos)) {
+                            moves.Add(new Move(firstPos, secondPos));
+                        }
+                    }
+                }
+            }
+
+            return moves;
+        }
+
+        protected void Revert(List<Action> reverts) {
+            foreach (Action revert in reverts) {
                 revert();
             }
         }
@@ -219,16 +256,5 @@ namespace Mill_AI {
                 }
             }
         }
-
-        //private RoundData GetProperNewRoundData(RoundData roundData) {
-        //    if (roundData.GetType() == typeof(RoundData)) {
-        //        return new RoundData(roundData);
-        //    } else if(roundData.GetType() == typeof(RoundDataMinimaxAlphaBeta)) {
-        //        return new RoundDataMinimaxAlphaBeta(roundData);
-        //    }
-
-        //    Console.WriteLine("GetProperNewRoundData doesn't work as it should.");
-        //    return null;
-        //}
     }
 }
