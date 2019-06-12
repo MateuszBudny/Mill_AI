@@ -16,6 +16,8 @@ namespace Mill_AI {
         private int skipCounter = 0;
         private const int SKIP_NUM = 100;
 
+        public AIPlayer(bool isWhite) : base(isWhite) {}
+
         public AIPlayer(bool isWhite, int maxDepth) : base(isWhite) {
             this.maxDepth = maxDepth;
         }
@@ -64,7 +66,7 @@ namespace Mill_AI {
             }
         }
 
-        protected abstract (int bestEvaluation, Move bestMove) GetBestMove(int currentDepth, Player currentPlayer);
+        protected abstract (int bestEvaluation, Move bestMove) GetBestMove(int maxDepth, Player currentPlayer);
 
         protected (List<Action> reverts, bool isMillHasBeenArrangedANextMove) MakeMoveReturnReverts(Move move, Player currentPlayer) {
 

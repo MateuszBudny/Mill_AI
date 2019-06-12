@@ -1,20 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Mill_AI {
-    class MinimaxAI : AIPlayer {
+    class MinimaxDeepeningAI : MinimaxAI {
 
-        public MinimaxAI(bool isWhite) : base(isWhite) { }
+        private double secondsToTimeout;
+        private Stopwatch stopwatch = new Stopwatch();
 
-        public MinimaxAI(bool isWhite, int maxDepth) : base(isWhite, maxDepth) { }
+        public MinimaxDeepeningAI(bool isWhite, double secondsToTimeout) : base(isWhite) {
+            this.secondsToTimeout = secondsToTimeout;
+        }
 
-        protected override (int bestEvaluation, Move bestMove) GetBestMove(int maxDepth, Player currentPlayer) =>
-            Minimax(maxDepth, currentPlayer);
+        protected override (int bestEvaluation, Move bestMove) GetBestMove(int maxDepth, Player currentPlayer) {
 
-        private (int bestEvaluation, Move bestMove) Minimax(int currentDepth, Player currentPlayer) {
+            int bestEvaluation = int.MinValue;
+            Move bestMove = null;
+            int bestDepth = 0;
+            int reachedDepth = 0;
+
+            stopwatch.Restart();
+            for (int d = 1; !IsTimeout(); d++) {
+                (int evaluation, Move move) = MinimaxWithTimeout(d, this);
+                if(!IsTimeout()) {
+                    bestEvaluation = evaluation;
+                    bestMove = move;
+                    bestDepth = d;
+                }
+                reachedDepth = d;
+            }
+
+            Console.WriteLine("bestDepth: " + bestDepth);
+            Console.WriteLine("reachedDepth: " + reachedDepth);
+            Console.WriteLine("time: " + stopwatch.ElapsedSeconds());
+            return (bestEvaluation, bestMove);
+        }
+
+        protected (int bestEvaluation, Move bestMove) MinimaxWithTimeout(int currentDepth, Player currentPlayer) {
+            
+            if(IsTimeout()) {
+                return (currentPlayer == this ? int.MinValue : int.MaxValue, null);
+            }
             //PrintWithSkip("evaluate static: " + EvaluateStatic() + "\nAI in hands: " + PawnsInHandNum + "\nAI on board: " + PawnsOnBoardNum +
             //    "\nEnemy in hands: " + Enemy.PawnsInHandNum + "\nEnemy on board: " + Enemy.PawnsOnBoardNum + "\n" + GameOfMill.Instance.GetNameOfStage(currentPlayer.State));
             if (currentDepth == 0 || GameOfMill.Instance.HasPlayerLost(currentPlayer)) {
@@ -29,23 +58,27 @@ namespace Mill_AI {
 
             moves = GetMoves(currentPlayer);
 
-            if(currentPlayer == this) {
-                
+            if (currentPlayer == this) {
+
                 int maxEvaluation = int.MinValue;
 
                 foreach (Move move in moves) {
-                    (reverts, isMillHasBeenArrangedANextMove) = MakeMoveReturnReverts(move, currentPlayer);
-                    if (!isMillHasBeenArrangedANextMove) {
-                        (evaluation, _) = Minimax(currentDepth - 1, currentPlayer == this ? Enemy : this);
-                    } else {
-                        (evaluation, _) = Minimax(currentDepth, currentPlayer);
+                    if(IsTimeout()) {
+                        break;
                     }
 
-                    if(evaluation == maxEvaluation) {
+                    (reverts, isMillHasBeenArrangedANextMove) = MakeMoveReturnReverts(move, currentPlayer);
+                    if (!isMillHasBeenArrangedANextMove) {
+                        (evaluation, _) = MinimaxWithTimeout(currentDepth - 1, currentPlayer == this ? Enemy : this);
+                    } else {
+                        (evaluation, _) = MinimaxWithTimeout(currentDepth, currentPlayer);
+                    }
+
+                    if (evaluation == maxEvaluation) {
                         bestMoves.Add(move);
                     }
 
-                    if(evaluation > maxEvaluation) {
+                    if (evaluation > maxEvaluation) {
                         maxEvaluation = evaluation;
                         bestMoves.Clear();
                         bestMoves.Add(move);
@@ -59,11 +92,15 @@ namespace Mill_AI {
                 int minEvaluation = int.MaxValue;
 
                 foreach (Move move in moves) {
+                    if (IsTimeout()) {
+                        break;
+                    }
+
                     (reverts, isMillHasBeenArrangedANextMove) = MakeMoveReturnReverts(move, currentPlayer);
                     if (!isMillHasBeenArrangedANextMove) {
-                        (evaluation, _) = Minimax(currentDepth - 1, currentPlayer == this ? Enemy : this);
+                        (evaluation, _) = MinimaxWithTimeout(currentDepth - 1, currentPlayer == this ? Enemy : this);
                     } else {
-                        (evaluation, _) = Minimax(currentDepth, currentPlayer);
+                        (evaluation, _) = MinimaxWithTimeout(currentDepth, currentPlayer);
                     }
 
                     if (evaluation == minEvaluation) {
@@ -82,5 +119,7 @@ namespace Mill_AI {
                 return (minEvaluation, bestMoves.Count == 0 ? new Move() : bestMoves[rand.Next(bestMoves.Count)]);
             }
         }
+
+        private bool IsTimeout() => stopwatch.ElapsedSeconds() > secondsToTimeout;
     }
 }

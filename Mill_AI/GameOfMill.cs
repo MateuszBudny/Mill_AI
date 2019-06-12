@@ -45,13 +45,14 @@ namespace Mill_AI {
             if (isFirstPlayerHuman) {
                 FirstPlayer = new HumanPlayer(true);
             } else {
-                FirstPlayer = new MinimaxAI(true, 4);
+                FirstPlayer = new MinimaxAI(true, 5);
             }
 
             if (isSecondPlayerHuman) {
                 SecondPlayer = new HumanPlayer(false);
             } else {
-                SecondPlayer = new MinimaxAI(false, 4);
+                SecondPlayer = new MinimaxAlphaBetaAI(false, 5);
+                //SecondPlayer = new MinimaxAI(false, 5);
             }
 
             FirstPlayer.Enemy = SecondPlayer;

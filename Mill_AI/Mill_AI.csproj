@@ -52,12 +52,12 @@
     <Compile Include="MillBoard.cs" />
     <Compile Include="MinimaxAI.cs" />
     <Compile Include="MinimaxAlphaBetaAI.cs" />
+    <Compile Include="MinimaxDeepeningAI.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RoundData.cs" />
     <Compile Include="Row.cs" />
     <Compile Include="Tools.cs" />
   </ItemGroup>
