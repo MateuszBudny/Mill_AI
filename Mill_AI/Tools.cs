@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
-namespace Mill_AI {
-    static class Tools {
-        public static string IntToStringWithZeros(int number) {
-            if(number < 10) {
+namespace Mill_AI
+{
+    internal static class Tools
+    {
+        public static string IntToStringWithZeros(int number)
+        {
+            if(number < 10)
+            {
                 return "0" + number;
             }
 

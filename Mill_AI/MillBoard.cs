@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Mill_AI {
-    public class MillBoard {
-
+namespace Mill_AI
+{
+    public class MillBoard
+    {
         public List<Node> Nodes { get; set; }
         public List<Row> Rows { get; set; }
 
-        public MillBoard() {
+        public MillBoard()
+        {
             InitBoard();
         }
 
-        private void InitBoard() {
+        private void InitBoard()
+        {
             Nodes = new List<Node>();
-            for(int i = 0; i < 24; i++) {
+            for(int i = 0; i < 24; i++)
+            {
                 Nodes.Add(new Node(i));
             }
 
@@ -82,25 +83,72 @@ namespace Mill_AI {
 
         }
 
-        public void Print() {
+        public void Print()
+        {
             int i = 0;
 
-            GetNextNodeToString(ref i); Console.Write(" ----- "); GetNextNodeToString(ref i); Console.Write(" ----- "); GetNextNodeToString(ref i); Console.Write("\n");
+            GetNextNodeToString(ref i);
+            Console.Write(" ----- ");
+            GetNextNodeToString(ref i);
+            Console.Write(" ----- ");
+            GetNextNodeToString(ref i);
+            Console.Write("\n");
             Console.Write("|        ||        |\n");
-            Console.Write("|  "); GetNextNodeToString(ref i); Console.Write(" -- "); GetNextNodeToString(ref i); Console.Write(" -- "); GetNextNodeToString(ref i); Console.Write("  |\n");
+            Console.Write("|  ");
+            GetNextNodeToString(ref i);
+            Console.Write(" -- ");
+            GetNextNodeToString(ref i);
+            Console.Write(" -- ");
+            GetNextNodeToString(ref i);
+            Console.Write("  |\n");
             Console.Write("|  |     ||     |  |\n");
-            Console.Write("|  |  "); GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("  |  |\n");
+            Console.Write("|  |  ");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("  |  |\n");
             Console.Write("|  |  |      |  |  |\n");
-            GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("    "); GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("\n");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("    ");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("\n");
             Console.Write("|  |  |      |  |  |\n");
-            Console.Write("|  |  "); GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("-"); GetNextNodeToString(ref i); Console.Write("  |  |\n");
+            Console.Write("|  |  ");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("-");
+            GetNextNodeToString(ref i);
+            Console.Write("  |  |\n");
             Console.Write("|  |     ||     |  |\n");
-            Console.Write("|  "); GetNextNodeToString(ref i); Console.Write(" -- "); GetNextNodeToString(ref i); Console.Write(" -- "); GetNextNodeToString(ref i); Console.Write("  |\n");
+            Console.Write("|  ");
+            GetNextNodeToString(ref i);
+            Console.Write(" -- ");
+            GetNextNodeToString(ref i);
+            Console.Write(" -- ");
+            GetNextNodeToString(ref i);
+            Console.Write("  |\n");
             Console.Write("|        ||        |\n");
-            GetNextNodeToString(ref i); Console.Write(" ----- "); GetNextNodeToString(ref i); Console.Write(" ----- "); GetNextNodeToString(ref i); Console.Write("\n\n\n");
+            GetNextNodeToString(ref i);
+            Console.Write(" ----- ");
+            GetNextNodeToString(ref i);
+            Console.Write(" ----- ");
+            GetNextNodeToString(ref i);
+            Console.Write("\n\n\n");
         }
 
-        private void GetNextNodeToString(ref int i) {
+        private void GetNextNodeToString(ref int i)
+        {
             Console.ForegroundColor = Nodes[i].GetFontColor();
             Console.Write(Nodes[i++].ToString());
             Console.ResetColor();

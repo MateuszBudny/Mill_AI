@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Mill_AI {
     class Program {
         static void Main(string[] args) {
-            GameOfMill.Instance.Run();
+            GameOfMill.Instance.RunMainMenu();
         }
     }
 }
